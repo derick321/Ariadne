@@ -76,7 +76,7 @@ async function makeUrlTree(historyItems) {
 
   onlyRoot = []
   for (visit of urlTree) {
-    if (!visit.hasFrom) {
+    if (!visit.hasFrom && visit.to.length > 0) {
       onlyRoot.push(visit)
     }
   }

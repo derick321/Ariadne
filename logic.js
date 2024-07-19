@@ -20,40 +20,63 @@ function urlIndex(urlTree, url) {
   return -1
 }
 
-async function makeUrlTree(historyItems) {
-  urlTree = []
-  for (let item of historyItems) {
+function changeRoot(visit, url) {
+  visit.root = url
+  if (visit.to.length > 0) {
+    for (let to of visit.to) {
+      changeRoot(to, url)
+    }
+  }
+}
+
+async function buildTree(urlTree) {
+  changed = false
+  for (let visit of urlTree) {
+    // fetch destinations from local storage
     tos = []
-    await chrome.storage.local.get(item.url).then((result) => {
-      if (result[item.url] !== undefined) {
-        tos = result[item.url]
+    await chrome.storage.local.get(visit.url).then((result) => {
+      if (result[visit.url] !== undefined) {
+        tos = result[visit.url]
       }
-      console.log("from: ", item.url)
-      console.log("to: ", tos)
     })
 
+    // build tree
+    if (tos.length > 0) {
+      for (let to of tos) {
+        index = urlIndex(urlTree, to)
+        if (index >= 0 && visit.to.indexOf(urlTree[index]) < 0) {
+          child = urlTree[index]
+          changeRoot(child, visit.root)
+          visit.to.push(child)
+          urlTree[index].hasFrom = true
+          changed = true
+        }
+      }
+    }
+  }
+  return changed
+}
+
+async function makeUrlTree(historyItems) {
+  // fetch historyItems => urlTree
+  urlTree = []
+  for (let item of historyItems) {
     visit = {
       url: item.url,
       title: item.title,
       lastVisitTime: item.lastVisitTime,
       to: [],
+      root: item.url,
       hasFrom: false
-    }
-    if (tos.length > 0) {
-      for (let to of tos) {
-        index = urlIndex(urlTree, to)
-        console.log("index: ", index)
-        if (index >= 0) {
-          visit.to.push(urlTree[index])
-          urlTree[index].hasFrom = true
-        }
-      }
     }
     urlTree.push(visit)
   }
+
+  await buildTree(urlTree)
+
   onlyRoot = []
   for (visit of urlTree) {
-    if (visit.to.length > 0) {
+    if (!visit.hasFrom) {
       onlyRoot.push(visit)
     }
   }
@@ -102,6 +125,7 @@ function createVisit(item, template, depth) {
 
 function createJourney(journey, template, depth) {
   createVisit(journey, template, depth)
+  if (journey.to === []) return
   for (let to of journey.to) {
     createJourney(to, template, depth + 1)
   }

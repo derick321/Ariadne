@@ -44,7 +44,7 @@ async function buildTree(urlTree) {
     if (tos.length > 0) {
       for (let to of tos) {
         index = urlIndex(urlTree, to)
-        if (index >= 0 && visit.to.indexOf(urlTree[index]) < 0) {
+        if (index >= 0 && visit.to.indexOf(urlTree[index]) < 0 && urlTree[index].root != visit.root) {
           child = urlTree[index]
           changeRoot(child, visit.root)
           visit.to.push(child)

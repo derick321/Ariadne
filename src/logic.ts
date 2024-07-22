@@ -106,7 +106,7 @@ async function makeUrlTree(historyItems: chrome.history.HistoryItem[]) {
   return onlyRoot;
 }
 
-function createVisit(
+async function createVisit(
   item: Visit,
   template: HTMLTemplateElement,
   depth: number
@@ -127,6 +127,42 @@ function createVisit(
 
   let history: HTMLDivElement = clone.querySelector(".history")!;
   history.style.marginLeft = marginStep * depth + "px";
+  let resolvedList: string[] = [];
+  await chrome.storage.local.get("resolvedList").then((result) => {
+    if (result["resolvedList"] !== undefined) {
+      resolvedList = result["resolvedList"];
+    }
+  });
+  if (resolvedList.indexOf(item.url) >= 0) {
+    history.classList.add("resolved");
+  }
+
+  let button = clone.querySelector(".resolveButton")!;
+  button.addEventListener("click", async function () {
+    history.classList.toggle("resolved");
+    let resolved = history.classList.contains("resolved");
+    let resolvedList: string[] = [];
+    await chrome.storage.local.get("resolvedList").then((result) => {
+      if (result["resolvedList"] !== undefined) {
+        resolvedList = result["resolvedList"];
+        console.log("before: ", resolvedList);
+      }
+    });
+    if (resolved && resolvedList.indexOf(item.url) < 0) {
+      resolvedList.push(item.url);
+      let resolvedStored: any = {};
+      resolvedStored["resolvedList"] = resolvedList;
+      await chrome.storage.local.set(resolvedStored);
+      console.log("after: ", resolvedList);
+    } else if (!resolved && resolvedList.indexOf(item.url) >= 0) {
+      resolvedList.splice(resolvedList.indexOf(item.url), 1);
+      let resolvedStored: any = {};
+      resolvedStored["resolvedList"] = resolvedList;
+      await chrome.storage.local.set(resolvedStored);
+      console.log("after: ", resolvedList);
+    }
+  });
+
   historyDiv.appendChild(clone);
 }
 

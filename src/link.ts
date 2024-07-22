@@ -1,8 +1,8 @@
 document.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', async (event) => {
-        from = window.location.href
-        to = await event.target.href
-        tos = []
+        let from: string = window.location.href
+        let to: string = (<HTMLAnchorElement>event.target!).href
+        let tos: Array<string> = []
         await chrome.storage.local.get(from).then(result => {
             if (result[from] !== undefined) {
                 console.log("before: ", result[from])
@@ -14,7 +14,7 @@ document.querySelectorAll('a').forEach(link => {
             return
         }
         tos.push(to)
-        fromTo = {}
+        let fromTo: any = {}
         fromTo[from] = tos
         await chrome.storage.local.set(fromTo)
         chrome.storage.local.get(from, (result) => {

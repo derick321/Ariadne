@@ -1,194 +1,38 @@
+import { makeUrlTree, createVisit, Visit } from "./tree";
+
 const kMillisecondsPerWeek = 1000 * 60 * 60 * 24 * 7;
 const kOneWeekAgo = new Date().getTime() - kMillisecondsPerWeek;
 const historyDiv = document.getElementById("historyDiv")!;
-const marginStep = 30;
 
-type Visit = {
-  url: string;
-  title: string;
-  lastVisitTime: number;
-  to: Visit[];
-  root: string;
-  hasFrom: boolean;
-};
-
-type URLTree = Array<Visit>;
-
-function faviconURL(u: string) {
-  const url = new URL(chrome.runtime.getURL("/_favicon/"));
-  url.searchParams.set("pageUrl", u);
-  url.searchParams.set("size", "24");
-  return url.toString();
-}
-
-function urlIndex(urlTree: URLTree, url: string) {
-  for (let i = 0; i < urlTree.length; i++) {
-    if (url === urlTree[i].url) {
-      return i;
-    }
-  }
-  return -1;
-}
-
-function changeRoot(visit: Visit, url: string) {
-  visit.root = url;
-  if (visit.to.length > 0) {
-    for (let to of visit.to) {
-      changeRoot(to, url);
-    }
-  }
-}
-
-async function buildTree(urlTree: URLTree) {
-  let changed = false;
-  for (let visit of urlTree) {
-    // fetch destinations from local storage
-    let tos: string[] = [];
-    await chrome.storage.local.get(visit.url).then((result) => {
-      if (result[visit.url] !== undefined) {
-        tos = result[visit.url];
-      }
-    });
-
-    // build tree
-    if (tos.length > 0) {
-      for (let to of tos) {
-        let index = urlIndex(urlTree, to);
-        if (
-          index >= 0 &&
-          visit.to.indexOf(urlTree[index]) < 0 &&
-          urlTree[index].root != visit.root
-        ) {
-          let child = urlTree[index];
-          changeRoot(child, visit.root);
-          visit.to.push(child);
-          urlTree[index].hasFrom = true;
-          changed = true;
-        }
-      }
-    }
-  }
-  return changed;
-}
-
-function newVisit(item: chrome.history.HistoryItem): Visit {
-  return {
-    url: item.url!,
-    title: item.title!,
-    lastVisitTime: item.lastVisitTime!,
-    to: [],
-    root: item.url!,
-    hasFrom: false,
-  };
-}
-
-async function makeUrlTree(historyItems: chrome.history.HistoryItem[]) {
-  // fetch historyItems => urlTree
-  let urlTree: URLTree = [];
-  for (let item of historyItems) {
-    let visit = newVisit(item);
-    try {
-      newVisit(item);
-      urlTree.push(visit);
-    } catch (e) {
-      console.log("invalid historyItem: ", e);
-    }
-  }
-
-  await buildTree(urlTree);
-
-  let onlyRoot: URLTree = [];
-  for (let visit of urlTree) {
-    if (!visit.hasFrom) {
-      onlyRoot.push(visit);
-    }
-  }
-  return onlyRoot;
-}
-
-async function createVisit(
-  item: Visit,
-  template: HTMLTemplateElement,
-  depth: number
-) {
-  const clone = document.importNode(template.content, true);
-  const pageLinkEl: HTMLAnchorElement = clone.querySelector(".page-link")!;
-  const pageTitleEl: HTMLParagraphElement = clone.querySelector(".page-title")!;
-  const imageWrapperEl: HTMLDivElement = clone.querySelector(".image-wrapper")!;
-  const favicon = document.createElement("img");
-  pageLinkEl.href = item.url;
-  favicon.src = faviconURL(item.url);
-  pageLinkEl.textContent = item.url;
-  imageWrapperEl.prepend(favicon);
-  if (!item.title) {
-    pageTitleEl.style.display = "none";
-  }
-  pageTitleEl.innerText = item.title;
-
-  let history: HTMLDivElement = clone.querySelector(".history")!;
-  history.style.marginLeft = marginStep * depth + "px";
-  let resolvedList: string[] = [];
-  await chrome.storage.local.get("resolvedList").then((result) => {
-    if (result["resolvedList"] !== undefined) {
-      resolvedList = result["resolvedList"];
-    }
-  });
-  if (resolvedList.indexOf(item.url) >= 0) {
-    history.classList.add("resolved");
-  }
-
-  let button = clone.querySelector(".resolveButton")!;
-  button.addEventListener("click", async function () {
-    history.classList.toggle("resolved");
-    let resolved = history.classList.contains("resolved");
-    let resolvedList: string[] = [];
-    await chrome.storage.local.get("resolvedList").then((result) => {
-      if (result["resolvedList"] !== undefined) {
-        resolvedList = result["resolvedList"];
-        console.log("before: ", resolvedList);
-      }
-    });
-    if (resolved && resolvedList.indexOf(item.url) < 0) {
-      resolvedList.push(item.url);
-      let resolvedStored: any = {};
-      resolvedStored["resolvedList"] = resolvedList;
-      await chrome.storage.local.set(resolvedStored);
-      console.log("after: ", resolvedList);
-    } else if (!resolved && resolvedList.indexOf(item.url) >= 0) {
-      resolvedList.splice(resolvedList.indexOf(item.url), 1);
-      let resolvedStored: any = {};
-      resolvedStored["resolvedList"] = resolvedList;
-      await chrome.storage.local.set(resolvedStored);
-      console.log("after: ", resolvedList);
-    }
-  });
-
-  historyDiv.appendChild(clone);
-}
-
+// createJourney recursively creates journey elements
 function createJourney(
   journey: Visit,
   template: HTMLTemplateElement,
   depth: number
 ) {
+  // Create root element for this journey
   createVisit(journey, template, depth);
   if (journey.to.length == 0) return;
+  // Create children elements
   for (let to of journey.to) {
     createJourney(to, template, depth + 1);
   }
 }
 
+// constructHistory makes a history tree and create elements of Journeys
 async function constructHistory(historyItems: chrome.history.HistoryItem[]) {
   let urlTree = await makeUrlTree(historyItems);
   const template: HTMLTemplateElement = <HTMLTemplateElement>(
     document.getElementById("historyTemplate")!
   );
   if (template === null) return;
+
   for (let journey of urlTree) {
     createJourney(journey, template, 0);
   }
 }
 
+// SearchSubmit event listener
 document.getElementById("searchSubmit")!.onclick = async function () {
   historyDiv.innerHTML = " ";
   const searchQuery = (<HTMLInputElement>(
@@ -201,6 +45,7 @@ document.getElementById("searchSubmit")!.onclick = async function () {
   await constructHistory(historyItems);
 };
 
+// DeleteSelected event listener
 document.getElementById("deleteSelected")!.onclick = async function () {
   const checkboxes = document.getElementsByTagName("input");
   for (let checkbox of checkboxes) {
@@ -211,11 +56,13 @@ document.getElementById("deleteSelected")!.onclick = async function () {
   location.reload();
 };
 
+// removeAll event listener
 document.getElementById("removeAll")!.onclick = async function () {
   await chrome.history.deleteAll();
   location.reload();
 };
 
+// Create history page
 chrome.history
   .search({
     text: "",

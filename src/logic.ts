@@ -67,6 +67,6 @@ chrome.history
   .search({
     text: "",
     startTime: kOneWeekAgo,
-    maxResults: 99,
+    maxResults: 199,
   })
   .then(constructHistory);

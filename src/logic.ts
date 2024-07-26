@@ -56,11 +56,21 @@ document.getElementById("deleteSelected")!.onclick = async function () {
   location.reload();
 };
 
-// removeAll event listener
+// RemoveAll event listener
 document.getElementById("removeAll")!.onclick = async function () {
   await chrome.history.deleteAll();
   location.reload();
 };
+
+let onlyJourney = document.getElementById("onlyJourney")!
+onlyJourney.onclick = async () => {
+  let hide = onlyJourney.classList.toggle("onlyJourney")
+  document.querySelectorAll(".notJourney").forEach((element) => {
+    if (hide)
+      (<HTMLElement>element).style.display = "none";
+    else (<HTMLElement>element).style.display = "flex";
+  })
+}
 
 // Create history page
 chrome.history

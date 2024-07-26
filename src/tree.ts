@@ -161,6 +161,10 @@ async function createVisit(
 
   let history: HTMLDivElement = clone.querySelector(".history")!;
   history.style.marginLeft = marginStep * depth + "px";
+  if (item.to.length == 0 && depth == 0) {
+    history.classList.add("notJourney");
+  }
+
   let resolvedList: string[] = [];
   await chrome.storage.local.get("resolvedList").then((result) => {
     if (result["resolvedList"] !== undefined) {

@@ -5,18 +5,25 @@ const kOneWeekAgo = new Date().getTime() - kMillisecondsPerWeek;
 const historyDiv = document.getElementById("historyDiv")!;
 
 // createJourney recursively creates journey elements
-function createJourney(
+async function createJourney(
   journey: Visit,
   template: HTMLTemplateElement,
-  depth: number
+  depth: number,
+  parentNode: HTMLElement
 ) {
   // Create root element for this journey
-  createVisit(journey, template, depth);
-  if (journey.to.length == 0) return;
+  let div = document.createElement("div");
+  div.classList.add("journey");
+  await createVisit(journey, template, depth, div);
+  if (journey.to.length == 0) {
+    parentNode.appendChild(div);
+    return;
+  }
   // Create children elements
   for (let to of journey.to) {
-    createJourney(to, template, depth + 1);
+    createJourney(to, template, depth + 1, div);
   }
+  parentNode.appendChild(div);
 }
 
 // constructHistory makes a history tree and create elements of Journeys
@@ -28,7 +35,7 @@ async function constructHistory(historyItems: chrome.history.HistoryItem[]) {
   if (template === null) return;
 
   for (let journey of urlTree) {
-    createJourney(journey, template, 0);
+    createJourney(journey, template, 0, historyDiv);
   }
 }
 

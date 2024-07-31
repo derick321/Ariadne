@@ -143,7 +143,8 @@ function toggleResolveFunc(history: HTMLDivElement, item: Visit) {
 async function createVisit(
   item: Visit,
   template: HTMLTemplateElement,
-  depth: number
+  depth: number,
+  parentNode: HTMLElement,
 ) {
   const clone = document.importNode(template.content, true);
   const pageLinkEl: HTMLAnchorElement = clone.querySelector(".page-link")!;
@@ -177,7 +178,8 @@ async function createVisit(
 
   history.addEventListener("click", toggleResolveFunc(history, item));
 
-  historyDiv.appendChild(clone);
+  parentNode.appendChild(clone);
+  return clone
 }
 
 export {createVisit, makeUrlTree, Visit}

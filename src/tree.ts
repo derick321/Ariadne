@@ -175,8 +175,7 @@ async function createVisit(
     history.classList.add("resolved");
   }
 
-  let button = clone.querySelector(".resolveButton")!;
-  button.addEventListener("click", toggleResolveFunc(history, item));
+  history.addEventListener("click", toggleResolveFunc(history, item));
 
   historyDiv.appendChild(clone);
 }

@@ -3,8 +3,16 @@ small {
   font-weight: normal;
 }
 
+#searchbar {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: white; /* Optional: to ensure it has a background */
+  z-index: 1000; /* Optional: to ensure it stays on top of other elements */
+}
+
 #historyDiv {
-  margin-top: 10px;
+  margin-top: 130px;
   display: flex;
   flex-direction: column;
   gap: 10px;

@@ -1,5 +1,5 @@
 const historyDiv = document.getElementById("historyDiv")!;
-const marginStep = 30;
+const marginStep = 35;
 
 type Visit = {
   url: string;

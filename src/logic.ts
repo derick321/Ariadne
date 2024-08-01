@@ -16,6 +16,7 @@ async function createJourney(
   div.classList.add("journey");
   await createVisit(journey, template, depth, div);
   if (journey.to.length == 0) {
+    div.querySelector(".toggle-wrapper")!.remove();
     parentNode.appendChild(div);
     return;
   }
@@ -38,36 +39,6 @@ async function constructHistory(historyItems: chrome.history.HistoryItem[]) {
     createJourney(journey, template, 0, historyDiv);
   }
 }
-
-// SearchSubmit event listener
-document.getElementById("searchSubmit")!.onclick = async function () {
-  historyDiv.innerHTML = " ";
-  const searchQuery = (<HTMLInputElement>(
-    document.getElementById("searchInput")!
-  )).value;
-  const historyItems = await chrome.history.search({
-    text: searchQuery,
-    startTime: kOneWeekAgo,
-  });
-  await constructHistory(historyItems);
-};
-
-// DeleteSelected event listener
-document.getElementById("deleteSelected")!.onclick = async function () {
-  const checkboxes = document.getElementsByTagName("input");
-  for (let checkbox of checkboxes) {
-    if (checkbox.checked) {
-      await chrome.history.deleteUrl({ url: checkbox.value });
-    }
-  }
-  location.reload();
-};
-
-// RemoveAll event listener
-document.getElementById("removeAll")!.onclick = async function () {
-  await chrome.history.deleteAll();
-  location.reload();
-};
 
 let onlyJourney = document.getElementById("onlyJourney")!
 onlyJourney.onclick = async () => {

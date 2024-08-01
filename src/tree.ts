@@ -139,6 +139,14 @@ function toggleResolveFunc(history: HTMLDivElement, item: Visit) {
   }
 }
 
+function toggleTreeFunc(journey: HTMLElement) {
+  return function () {
+    journey.querySelectorAll(".journey").forEach((element) => {
+      element.classList.toggle("folded")
+    })
+  }
+}
+
 // createVisit creates an actual history element and add it to DOM(historyDiv)
 async function createVisit(
   item: Visit,
@@ -150,6 +158,7 @@ async function createVisit(
   const pageLinkEl: HTMLAnchorElement = clone.querySelector(".page-link")!;
   const pageTitleEl: HTMLParagraphElement = clone.querySelector(".page-title")!;
   const imageWrapperEl: HTMLDivElement = clone.querySelector(".image-wrapper")!;
+  const toggleCheck = clone.querySelector(".toggle-check")!;
   const favicon = document.createElement("img");
   pageLinkEl.href = item.url;
   favicon.src = faviconURL(item.url);
@@ -177,6 +186,7 @@ async function createVisit(
   }
 
   history.addEventListener("click", toggleResolveFunc(history, item));
+  toggleCheck.addEventListener("click", toggleTreeFunc(parentNode));
 
   parentNode.appendChild(clone);
   return clone

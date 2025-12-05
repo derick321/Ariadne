@@ -1,129 +1,323 @@
-small {
-  font-size: 12px;
-  font-weight: normal;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+    --bg-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --text-primary: #1a1a1a;
+    --text-secondary: #666666;
+    --accent-color: #3b82f6;
+    --border-color: #e5e7eb;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --tree-line-color: #d1d5db;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+}
+
+#app-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-top: 80px; /* Space for fixed header */
 }
 
 #searchbar {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  background-color: white; /* Optional: to ensure it has a background */
-  z-index: 1000; /* Optional: to ensure it stays on top of other elements */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 40px;
+    box-shadow: var(--shadow-sm);
+
+    .brand {
+        display: flex;
+        flex-direction: column;
+        
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        small {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+    }
+
+    .search-controls {
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 5px 5px 5px 20px;
+            transition: all 0.2s;
+            width: 400px;
+
+            &:focus-within {
+                border-color: var(--accent-color);
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+
+            input {
+                border: none;
+                background: transparent;
+                outline: none;
+                flex-grow: 1;
+                font-family: inherit;
+                font-size: 0.95rem;
+                padding: 5px 0;
+            }
+
+            button {
+                background: var(--accent-color);
+                border: none;
+                border-radius: 50%;
+                width: 36px;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                cursor: pointer;
+                transition: background 0.2s;
+
+                &:hover {
+                    background: darken(#3b82f6, 10%);
+                }
+            }
+        }
+    }
 }
 
 #historyDiv {
-  margin-top: 100px;
-  display: flex;
-  flex-direction: column;
-  //gap: 10px;
-  max-width: 1000px;
+    padding: 20px 40px;
+    
+    .empty-state {
+        text-align: center;
+        margin-top: 100px;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+}
 
-  .journey {
+.date-header {
+    position: sticky;
+    top: 70px; /* Height of the fixed searchbar */
+    z-index: 900;
+    background-color: var(--bg-color); /* Match body bg to cover content behind */
+    margin: 20px 0 10px 0;
+    padding: 10px 0;
+    
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+
+    display: flex;
+    align-items: center;
+
+    /* Horizontal separator */
+    &::after {
+        content: "";
+        flex-grow: 1;
+        height: 1px;
+        background-color: var(--border-color);
+        margin-left: 15px;
+    }
+}
+
+/* Tree Structure */
+.journey-wrapper {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.children-container {
+    padding-left: 24px; /* Init spacing */
+    margin-left: 12px;
+    border-left: 2px solid var(--tree-line-color);
+    position: relative;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    max-height: 5000px; /* Arbitrary large height for animation */
+    pointer-events: auto;
+    opacity: 1;
+    
+    &.folded {
+        max-height: 0;
+        opacity: 0;
+        margin-bottom: 0;
+        pointer-events: none;
+    }
+}
+
+.history {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    width: fit-content;
+    min-width: 300px;
+    max-width: 100%;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: default;
+    position: relative;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+        border-color: #dbeafe;
+    }
+
+    /* Connector line for child items */
+    .journey-wrapper .children-container & {
+        &:before {
+            content: "";
+            position: absolute;
+            left: -38px; /* Alignment with border-left of container */
+            top: 50%;
+            width: 20px;
+            height: 2px;
+            background-color: var(--tree-line-color);
+        }
+    }
+}
+
+.toggle-wrapper {
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+
+    .toggle {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        transition: background 0.2s;
+        
+        &:hover {
+            background-color: #f3f4f6;
+        }
+
+        input {
+            display: none;
+        }
+
+        .arrow-icon {
+            color: var(--text-secondary);
+            transition: transform 0.3s;
+            display: flex;
+        }
+
+        input:checked + .arrow-icon {
+            transform: rotate(-90deg);
+        }
+    }
+}
+
+.card-content {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0; /* flexbox truncation fix */
+}
+
+.image-wrapper {
+    width: 24px;
+    height: 24px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    
+    img {
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
+    }
+}
+
+.page-meta {
     display: flex;
     flex-direction: column;
-    //gap: 10px;
-    transition: 0.3s, ease-in-out;
+    min-width: 0;
 
-    .history {
-      box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.2);
-      border-radius: 10px;
-      display: flex;
-      height: 40px;
-      padding: 10px;
-        margin: 5px;
-      cursor: pointer;
-
-      .toggle {
-        .arrow{
-          height: auto;
-          width: 36px;
-          object-fit: contain;
-          transition: 0.1s;
-        }
-      }
-      .toggle-check:checked ~ .arrow {
-        transform: rotate(-90deg);
-      }
-
-      .image-wrapper {
-        width: 24px;
-        height: 100%;
-        margin-right: 10px;
-        flex-grow: 0;
-        flex-shrink: 0;
-
-        .image-wrapper img {
-          width: 100%;
-        }
-      }
-      .page-meta {
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        max-width: calc(100% - 180px);
-
-        .page-detail {
-          display: flex;
-          flex-direction: column;
-          align-items: start;
-
-          .page-title {
-            font-weight: bold;
-            font-size: 0.8rem;
-          }
-
-          .page-link {
-            font-size: 0.8rem;
-            color: #8c8c8c;
-          }
-
-          .page-link:hover {
-            color: #000;
-          }
-
-          .page-link,
-          .page-title {
-            overflow: hidden;
-            white-space: nowrap;
-            max-width: 100%;
-            display: inline-block;
-            text-overflow: ellipsis;
-            margin: 0;
-          }
-        }
-
-        .page-visit-time {
-          font-size: 0.8rem;
-          color: #a5a5a5;
-        }
-      }
-
-      .actions {
-        //flex-grow: 0;
-        flex-shrink: 0;
-        display: flex;
-        flex-grow: 1;
-        flex-direction: column;
-        justify-content: space-between;
-        align-items: end;
-        gap: 5px;
-      }
-    }
-  }
-
-  .folded {
-    display: none;
-  }
-
-  .resolved {
-    // gray background
-    background-color: #dbdbdb;
     .page-title {
-      text-decoration: line-through;
+        font-size: 0.95rem;
+        font-weight: 500;
+        margin: 0 0 2px 0;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
-  }
-  .history:hover {
-    background: #a5a5a5;
-  }
+
+    .page-link {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.2s;
+         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        &:hover {
+            color: var(--accent-color);
+            text-decoration: underline;
+        }
+    }
+}
+
+.actions {
+    margin-left: auto;
+    opacity: 0;
+    transition: opacity 0.2s;
+    
+    .history:hover & {
+        opacity: 1;
+    }
+
+    .delete-btn {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        color: #ef4444; /* Red color */
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            background-color: #fee2e2;
+        }
+    }
 }

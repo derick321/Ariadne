@@ -11,7 +11,6 @@ const entryPoints = {
         // path.resolve(__dirname, 'src', 'link.ts'),
         path.resolve(__dirname, 'scss', 'main.scss')
     ],
-    background: path.resolve(__dirname, 'src', 'link.ts')
 };
 
 module.exports = {
